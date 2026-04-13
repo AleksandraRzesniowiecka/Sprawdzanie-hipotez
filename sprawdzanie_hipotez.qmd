@@ -1,0 +1,518 @@
+---
+format: 
+  pdf:
+    pdf-engine: xelatex
+    toc: false
+    code: false
+    number-sections: true
+    include-in-header: 
+      - text: |
+          \usepackage{fontspec}
+          \setmainfont{Times New Roman}
+          \setsansfont{Times New Roman}
+          \usepackage{fancyhdr}
+geometry: margin=2.5cm
+lang: pl
+fontsize: 12pt
+---
+
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[L]{Sprawdzenie hipotez za pomocą testów statystycznych}
+\fancyhead[R]{\thepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+# Polecenia
+Rozważamy testy na poziomie istotności $\alpha=0.05$ do testowania
+\begin{itemize}
+    \item $H_{0}: \mu=1$, przeciwko 
+    \item $H_{1}: \mu \neq 1$. 
+\end{itemize}
+
+Będziemy wykonywać sprawdzenie tej hipotezy, stosując wprost trzy testy:
+\begin{enumerate}
+    \item \textbf{testu $z$} przy założeniu $\sigma=2$, 
+    \item \textbf{testu $t$-Studenta}, 
+    \item \textbf{testu rang znakowanych Wilcoxona}.
+\end{enumerate}
+
+\subsection*{Zadanie 1} 
+Rozważmy próbę $(X_{1},...,X_{100})$ z rozkładu normalnego $\mathcal{N}(\mu,2^{2})$. Korzystając z symulacji Monte Carlo wykonaj wykres funkcji mocy w zależności od $\mu$ na przedziale $(-1, 3)$ dla wszystkich trzech testów. Czy istnieje test jednostajnie najmocniejszy spośród nich? 
+
+\subsection*{Zadanie 2}
+Rozważmy próbę $(X_{1},...,X_{100})$ z rozkładu normalnego $\mathcal{N}(\mu,4^{2})$. Wykonaj wykres funkcji mocy na wybranym przedziale zawierającym przynajmniej po jednym punkcie z hipotezy zerowej i alternatywnej.  Jak zmieniła się funkcja mocy testów? Czy w tym przypadku istnieje test jednostajnie najmocniejszy spośród nich? 
+
+\subsection*{Zadanie 3}
+Rozważmy próbę $(X_{1},...,X_{100})$ z rozkładu wykładniczego $\mathcal{E}(\frac{1}{\mu})$. Wykonaj wykres funkcji mocy na wybranym przedziale zawierającym przynajmniej po jednym punkcie z hipotezy zerowej i alternatywnej. Jak zmieniła się funkcja mocy testów? Czy w tym przypadku istnieje test jednostajnie najmocniejszy spośród nich? 
+
+\newpage
+# Wstęp teoretyczny
+\section*{Sformułowanie problemu}
+W tym sprawozdaniu weryfikujemy hipotezy statystyczne dotyczące wartości oczekiwanej $\mu$ zmiennej losowej.
+Zgodnie z teorią weryfikacji hipotez statystycznych, wyróżniamy dwie hipotezy:
+\begin{itemize}
+    \item \textbf{Hipoteza zerowa ($H_0: \mu = 1$)} - jest to hipoteza poddawana procedurze weryfikacji. Domyślnie zakładamy, że jest prawdziwa, dopóki dane nie wskażą inaczej.
+    \item \textbf{Hipoteza alternatywna ($H_1: \mu \neq 1$)} - jest to hipoteza, którą jesteśmy skłonni przyjąć w przypadku odrzucenia hipotezy zerowej.
+\end{itemize}
+
+Testy przeprowadzamy na \textbf{poziomie istotności} $\alpha = 0.05$. Zgodnie z definicją, poziom istotności to dopuszczalne ryzyko popełnienia błędu I rodzaju, czyli odrzucenia hipotezy zerowej, gdy jest ona w rzeczywistości prawdziwa. Oznacza to, że jeśli $H_0$ jest prawdziwa, test powinien ją odrzucić średnio tylko w 5\% przypadków.
+
+\section*{Cel sprawozdania i metoda Monte Carlo}
+Głównym celem sprawozdania jest analiza i porównanie funkcji mocy trzech testów statystycznych (testu $z$, testu t-Studenta oraz testu Wilcoxona) weryfikujących hipotezę $H_0: \mu=1$ przeciwko $H_1: \mu \neq 1$ przy użyciu metod symulacyjnych \textbf{Monte Carlo}. Analiza obejmuje trzy odrębne scenariusze badawcze:
+\begin{itemize}
+\item \textbf{Celem zadania pierwszego} jest wyznaczenie krzywych mocy testów w warunkach, gdy założenia modelu są w pełni spełnione. Dane generowane są z rozkładu normalnego $\mathcal{N}(\mu, 2^2)$, co jest zgodne z założeniem testu Z ($\sigma=2$). Symulacja ma na celu sprawdzenie, czy w tych idealnych warunkach test Z jest testem jednostajnie najmocniejszym oraz jak wypada jego skuteczność w porównaniu do testu t-Studenta i nieparametrycznego testu Wilcoxona.
+
+\item \textbf{Celem zadania drugiego} jest zbadanie wrażliwości testów na zmianę wariancji w populacji, przy jednoczesnym utrzymaniu (błędnego) założenia o jej wartości w teście Z. Generowane dane pochodzą z rozkładu $\mathcal{N}(\mu, 4^2)$, co oznacza dwukrotnie większe odchylenie standardowe niż zakłada statystyka testowa $z$. Zadanie to ma pokazać, jak niedoszacowanie wariancji wpływa na funkcję mocy i rzetelność testów parametrycznych.
+
+\item \textbf{Celem zadania trzeciego} jest ocena odporności testów parametrycznych na naruszenie założenia o normalności rozkładu. Poprzez generowanie danych z niesymetrycznego rozkładu wykładniczego $\mathcal{E}(\frac{1}{\mu})$, symulacja ma za zadanie porównać skuteczność testów klasycznych ($z$, t-Student) z testem nieparametrycznym (Wilcoxona) w sytuacji, gdy rozkład danych znacznie odbiega od krzywej Gaussa.
+\end{itemize}
+
+\section*{Używane testy statystyczne}
+\subsection*{Test $z$}
+Jest to test parametryczny, a więc taki, który służy do weryfikacji hipotez o parametrach populacji. Wymaga jednak spełnienia konkretnych założeń, są to:
+\begin{itemize}
+\item dane powinny pochodzić z populacji \textbf{o rozkładzie normalnym},
+\item dane muszą być mierzone na skali ilościowej,
+\item wariancje porównywanych grup powinny być w przybliżeniu równe,
+\item nie ma wartości odstających.
+\end{itemize}
+
+Testy te cechują się zazwyczaj większą mocą statystyczną niż testy nieparametryczne, są jednak wrażliwe na niespełnienie założeń.
+
+W tym przypadku znamy wariancję. Zgodnie z treścią zadania zakładamy, że $\sigma = 2$. Statystyka testowa jest następująca
+
+$$z = \frac{\bar{X} - \mu_{0}}{\frac{\sigma}{\sqrt{n}}},$$
+
+gdzie
+\begin{itemize}
+\item $\bar{X}$ to średnia z próby, 
+\item $\mu_0=1$ to testowana wartość, 
+\item $\sigma=2$ (w naszym zadaniu założona stała)
+\end{itemize}
+
+Przy założeniu prawdziwości $H_0$, statystyka ta ma standardowy rozkład normalny $\mathcal{N}(0,1)$. Odrzucamy $H_0$, gdy wartość bezwzględna statystyki $|z|$ przekroczy wartość krytyczną (dla $\alpha=0.05$ jest to ok. 1.96). Test ten jest najmocniejszy dla rozkładu normalnego przy znanej wariancji, jednak traci swoje własności, gdy założona wartość $\sigma$ różni się od rzeczywistej.
+
+\subsection*{Test t-Studenta}
+Jest to test parametryczny, w którym nie znamy dokładnej wariancji populacji. Estymujemy ją z próby. Statystyka testowa jest dana wzorem
+
+$$T = \frac{\bar{X} - \mu_{0}}{\frac{S}{\sqrt{n}}},$$
+
+gdzie
+\begin{itemize}
+\item $S$ - odchylenie standardowe z próby.
+\end{itemize}
+
+Statystyka ta podlega rozkładowi t-Studenta z $n-1$ stopniami swobody. Test t-Studenta jest testem odpornym, czyli zachowuje on swoje właściwości (trzymanie poziomu istotności) nawet przy umiarkowanych odstępstwach od normalności rozkładu danych, o ile liczebność próby jest duża. Jest on asymptotycznie równoważny testowi $z$, gdy wielkość próby dąży do nieskończoności.
+
+
+\subsection*{Test rang znakowanych Wilcoxona}
+Jest to test nieparametryczny, a więc taki, który nie zakłada rozkładu normalnego. Bada on medianę lub położenie.
+
+Moc testu, definiowana jako prawdopodobieństwo odrzucenia $H_0$ dla danej wartości parametru $\mu$, wyraża się wzorem:
+
+$$\beta(\mu) = P(\text{odrzucenie } H_0 | \mu).$$
+
+To nieparametryczna alternatywa dla testu t-Studenta. Nie wymaga on założenia o normalności rozkładu danych, a jedynie symetrii rozkładu względem mediany. Test ten opiera się na rangach wartości bezwzględnych różnic pomiędzy obserwacjami a testowaną medianą ($\mu_0$). Jeżeli hipoteza zerowa jest prawdziwa, sumy rang dla różnic dodatnich i ujemnych powinny być zbliżone. Test Wilcoxona jest zazwyczaj nieco słabszy od testu t-Studenta dla danych idealnie normalnych, ale może być znacznie mocniejszy w przypadku rozkładów z \textit{grubymi ogonami} lub obecności obserwacji odstających.
+
+
+\newpage
+# Zadanie 1
+\subsection{Opis przebiegu realizacji zadania}
+
+Kod użyty do wykonania zadania realizuje symulacje dla przypadku, w którym dane pochodzą z rozkładu normalnego $\mathcal{N}(\mu, 2^2)$, a \textbf{test $z$ }posiada założenie o odchyleniu standardowym ($\sigma = 2$). Po ustaleniu ziarna generatora `set.seed` i parametrów początkowych, dla każdego punktu pomiarowego $\mu$ z wektora `mu_range`.
+
+\begin{enumerate}
+  \item Generujemy losową próbę $n=100$ elementową z rozkładu normalnego za pomocą funkcji \texttt{rnorm}, przyjmując \texttt{mean = mu} oraz rzeczywiste odchylenie \texttt{sd = 2}.
+  \item Przeprowadzamy trzy testy statystyczne w celu weryfikacji $H_0: \mu=1$:
+  \begin{itemize}
+    \item Dla \textbf{testu $z$} obliczamy statystykę ręcznie ze wzoru $z = \frac{\bar{X} - 1}{\frac{2}{\sqrt{n}}}$, a następnie wyznaczamy p-value z dystrybuanty rozkładu normalnego (\texttt{pnorm}).
+    \item Dla \textbf{testu t-Studenta} wykorzystujemy wbudowaną funkcję \texttt{t.test} z parametrem \texttt{mu=1}.
+    \item Dla \textbf{testu Wilcoxona} stosujemy funkcję \texttt{wilcox.test} (z parametrem \texttt{exact=FALSE} ze względu na liczebność próby).
+  \end{itemize}
+
+  \item Powtarzamy ten proces \texttt{M} razy (w pętli wewnętrznej), zliczając przypadki, w których uzyskane p-value jest mniejsze od poziomu istotności $\alpha=0.05$.
+  \item Frakcja odrzuceń (obliczona jako \texttt{reject/M}) stanowi estymator mocy każdego z testów dla danej wartości $\mu$.
+\end{enumerate}
+
+
+Na zakończenie wyniki są przedstawione na wspólnym wykresie.
+
+\subsection{Wykres}
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.align: 'center'
+#| dev: cairo_pdf 
+
+library(ggplot2)
+library(tidyr)
+
+set.seed(123)
+n <- 100          
+alpha <- 0.05    
+M <- 1000       
+
+sigma_true <- 2  
+sigma_assumed <- 2
+mu_range <- seq(-1, 3, by = 0.1)
+
+results <- data.frame(
+  mu = numeric(),
+  Z_test = numeric(),
+  T_test = numeric(),
+  Wilcoxon = numeric()
+)
+
+for (mu in mu_range) {
+
+  reject_z <- 0
+  reject_t <- 0
+  reject_w <- 0
+  
+  for (i in 1:M) {
+    sample_data <- rnorm(n, mean = mu, sd = sigma_true)
+    
+    z_stat <- (mean(sample_data) - 1) / (sigma_assumed / sqrt(n))
+    p_z <- 2 * (1 - pnorm(abs(z_stat)))
+    if (p_z < alpha) reject_z <- reject_z + 1
+
+    t_res <- t.test(sample_data, mu = 1)
+    if (t_res$p.value < alpha) reject_t <- reject_t + 1
+
+    w_res <- wilcox.test(sample_data, mu = 1, exact = FALSE) 
+    if (w_res$p.value < alpha) reject_w <- reject_w + 1
+  }
+  
+  results <- rbind(results, data.frame(
+    mu = mu,
+    Z_test = reject_z / M,
+    T_test = reject_t / M,
+    Wilcoxon = reject_w / M
+  ))
+}
+
+results_long <- pivot_longer(results, cols = c("Z_test", "T_test", "Wilcoxon"), names_to = "Test", values_to = "Power")
+
+plot_zad1 <- ggplot(results_long, aes(x = mu, y = Power, color = Test)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  geom_hline(yintercept = 0.05, linetype = "dashed", color = "gray50") +
+  annotate("text", x = 2.5, y = 0.1, label = "alfa = 0.05", color = "gray50") +
+  labs(
+    title = "Porównanie testu z, t-Studenta i Wilcoxona",
+    x = expression(mu),
+    y = "Moc testu"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Z_test" = "pink", "T_test" = "violet", "Wilcoxon" = "cyan")) +
+  theme(
+    plot.title = element_text(family = "serif", size = 14, face = "bold"),
+    text = element_text(family = "serif")
+  )
+print(plot_zad1)
+```
+
+\subsection{Wnioski odczytane z wykresu}
+\subsubsection*{Weryfikacja poziomu istotności (dla $\mu = 1$)}
+Analizę rozpoczęłyśmy od zbadania zachowania testów w punkcie $\mu = 1$, w którym hipoteza zerowa $H_0$ jest prawdziwa. Na podstawie wykresu można stwierdzić, że dla wszystkich trzech testów empiryczna funkcja mocy przyjmuje w tym punkcie wartość bliską $0.05$. Wynik ten pokrywa się z przyjętym nominalnym poziomem istotności $\alpha$. Oznacza to, że rzeczywiste prawdopodobieństwo popełnienia \textbf{błędu I rodzaju} odpowiada założonemu poziomowi istotności $\alpha$.
+
+\subsubsection*{Analiza kształtu funkcji mocy}
+Otrzymane krzywe mocy wykazują symetrię względem prostej $\mu = 1$, co jest konsekwencją symetrii rozkładu normalnego próbkowania oraz dwustronnej postaci hipotezy alternatywnej ($H_1: \mu \neq 1$). Wraz ze wzrostem odległości parametru $\mu$ od wartości testowanej $\mu_0=1$, moc testów rośnie monotonicznie, co świadczy o nieobciążoności badanych testów. Oznacza to, że są one tak samo skuteczne w wykrywaniu odchyleń w obu kierunkach (dodatnim i ujemnym).
+Warto dodać, że dla odchyleń rzędu jednego odchylenia standardowego populacji (np. $\mu=0$ lub $\mu=2$), moc wszystkich testów osiąga wartość $1$. Wynika to z faktu, że przy liczebności próby $N=100$, błąd standardowy średniej wynosi zaledwie $0.2$. Zatem przesunięcie $\mu$ o $1$ stanowi aż pięciokrotność błędu standardowego, co gwarantuje pewne odrzucenie hipotezy zerowej.
+
+\subsubsection*{Porównanie skuteczności testów}
+\textbf{Test $z$ oraz Test t-Studenta }
+
+Na wykresie widzimy, że linie odpowiadające testowi $z$ oraz testowi t-Studenta niemal całkowicie się pokrywają. Oznacza to, że oba testy działają w tym przypadku niemal identycznie. Dzieje się tak dzięki dużej liczebności próby ($N=100$). Test t-Studenta, w przeciwieństwie do testu $z$, nie zna prawdziwej wariancji i musi ją wyliczać z danych. Jednak przy $100$ obserwacjach to estymacja jest bardzo precyzyjna. Dodatkowo, przy tak dużej próbie, rozkład t-Studenta staje się niemal identyczny z rozkładem normalnym. 
+
+\textbf{Testy parametryczne oraz Test Wilcoxona (nieparametryczny)}
+
+Krzywa reprezentująca test Wilcoxona (turkusowa) znajduje się minimalnie poniżej wykresów testów parametrycznych, co jest szczególnie zauważalne w środkowych partiach zbocza wykresu (np. dla $\mu=0.6$). Oznacza to, że dla danych z rozkładu normalnego test ten ma nieco mniejszą zdolność wykrywania fałszywości hipotezy zerowej. Test Wilcoxona nie bierze pod uwagę konkretnych wartości liczbowych, lecz jedynie ich rangi (kolejność), co wiąże się z pewną utratą informacji zawartej w danych. Mimo to, strata ta jest niewielka, ponieważ teoretyczna efektywność testu Wilcoxona względem testu t-Studenta dla rozkładu normalnego wynosi aż $95.5%$, co potwierdza wysoka pozycja jego krzywej mocy na wykresie.
+
+\subsubsection*{Odpowiedź na pytanie badawcze: Czy istnieje test jednostajnie najmocniejszy?}
+\textbf{Testem jednostajnie najmocniejszym} nazywamy test, który dla każdego ustalonego poziomu istotności $\alpha$ posiada moc nie mniejszą niż jakikolwiek inny test tego samego rozmiaru, dla każdej alternatywy z przestrzeni parametrów.
+
+Analiza teoretyczna oraz wizualna wykresów pozwalają stwierdzić, że \textbf{test $z$ osiąga najwyższą moc dla każdego $\mu$}. Należy jednak podkreślić, że dla hipotez dwustronnych w rozkładzie normalnym teoretycznie nie istnieje test jednostajnie najmocniejszy. Test $z$ jest w tym przypadku testem jednostajnie najmocniejszym nieobciążonym. Test t-Studenta wykazuje właściwości zbliżone do optymalnych (różnica jest pomijalna), natomiast test Wilcoxona, jako test nieparametryczny, charakteryzuje się w tych warunkach niższą mocą. Stąd test $z$ dominuje nad pozostałymi dwoma testami.
+
+
+<!-- ktora strona dokladnie \cite[Tw. 3.1 lub str ]{wyk6ag} -->
+\newpage
+# Zadanie 2
+\subsection{Opis przebiegu realizacji zadania}
+Realizacja tego zadania miała na celu sprawdzenie, jak testy statystyczne radzą sobie w sytuacji, gdy rzeczywistość "rozjeżdża się" z założeniami modelu. Zgodnie z wytycznymi raportu, nie starałyśmy się naprawiać testów, lecz celowo zbadałyśmy wpływ błędnego założenia o wariancji na wyniki weryfikacji hipotez. Cała procedura została przeprowadzona przy użyciu symulacji Monte Carlo.
+
+W pierwszej kolejności skupiłyśmy się na generowaniu danych. Aby zasymulować środowisko o większej zmienności, dla każdego punktu pomiarowego $\mu$ losowałyśmy próby $N=100$ elementowe z rozkładu normalnego $\mathcal{N}(\mu, 4^2)$. Oznacza to, że rzeczywiste odchylenie standardowe w naszych danych wynosiło $\sigma_{true} = 4$, co wprowadzało do próby znacznie większy "szum" niż w zadaniu pierwszym.
+
+Następnie przystąpiłyśmy do weryfikacji hipotez, traktując każdy test inaczej. Dla testu $z$ zaimplementowałyśmy \textbf{pułapkę}. Mimo że dane pochodziły z rozkładu o odchyleniu równym $4$, we wzorze na statystykę testową sztywno przyjęłyśmy założenie, że odchylenie wynosi $\sigma_{assumed} = 2$. Pozwoliło to sprawdzić, jak niedoszacowanie zmienności wpływa na decyzję o odrzuceniu hipotezy zerowej. Testy t-Studenta i Wilcoxona potraktowałyśmy standardowo, jako punkt odniesienia.
+
+Kod użyty do wykonania zadania realizuje te założenia w następujących krokach. Po ustaleniu ziarna generatora \texttt{set.seed} i parametrów początkowych, dla każdego punktu pomiarowego $\mu$ z wektora \texttt{mu\_range}:
+
+\begin{enumerate}
+  \item Generujemy losową próbę $n=100$ elementową z rozkładu normalnego za pomocą funkcji \texttt{rnorm}, przyjmując \texttt{mean = mu} oraz rzeczywiste odchylenie \texttt{sd = 4}.
+  \item Przeprowadzamy trzy testy statystyczne w celu weryfikacji $H_0: \mu = 1$:
+    \begin{itemize}
+      \item Dla \textbf{testu z} obliczamy statystykę ręcznie ze wzoru $z = \frac{\bar{X} - 1}{\frac{2}{\sqrt{n}}}$, celowo używając w mianowniku wartości $2$ (zgodnie z błędnym założeniem), a następnie wyznaczamy p-value z dystrybuanty rozkładu normalnego (\texttt{pnorm}).
+      \item Dla \textbf{testu t-Studenta} wykorzystujemy wbudowaną funkcję \texttt{t.test} z parametrem \texttt{mu=1}, która samodzielnie estymuje odchylenie z próby.
+      \item Dla \textbf{testu Wilcoxona} stosujemy funkcję \texttt{wilcox.test} (z parametrem \texttt{exact=FALSE} ze względu na liczebność próby).
+    \end{itemize}
+  \item Powtarzamy ten proces \texttt{M} razy (w pętli wewnętrznej), zliczając przypadki, w których uzyskane p-value jest mniejsze od poziomu istotności $\alpha=0.05$.
+  \item Frakcja odrzuceń (obliczona jako \texttt{reject/M}) stanowi estymator mocy każdego z testów dla danej wartości $\mu$.
+\end{enumerate}
+
+Na zakończenie wyniki są przedstawione na wspólnym wykresie, obrazującym wpływ naruszenia założeń na rzetelność wnioskowania.
+
+\subsection{Wykres}
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.align: 'center'
+#| dev: cairo_pdf 
+
+set.seed(123)
+
+n <- 100
+alpha <- 0.05
+M <- 2000  
+mu_range <- seq(-1, 3, length.out = 41) 
+sigma_true <- 4     # prawdziwe odchylenie w danych
+sigma_assumed <- 2  # błędne założenie dla testu Z
+
+results <- data.frame(
+  mu = numeric(),
+  Z_test = numeric(),
+  T_test = numeric(),
+  Wilcoxon = numeric()
+)
+
+for (mu in mu_range) {
+  
+  reject_z <- 0
+  reject_t <- 0
+  reject_w <- 0
+  
+  for (i in 1:M) {
+    sample_data <- rnorm(n, mean = mu, sd = sigma_true)
+
+    z_stat <- (mean(sample_data) - 1) / (sigma_assumed / sqrt(n))
+    p_z <- 2 * (1 - pnorm(abs(z_stat)))
+    if (p_z < alpha) reject_z <- reject_z + 1
+    
+    t_res <- t.test(sample_data, mu = 1)
+    if (t_res$p.value < alpha) reject_t <- reject_t + 1
+    
+    w_res <- wilcox.test(sample_data, mu = 1, exact = FALSE) 
+    if (w_res$p.value < alpha) reject_w <- reject_w + 1
+  }
+  
+  results <- rbind(results, data.frame(
+    mu = mu,
+    Z_test = reject_z / M,
+    T_test = reject_t / M,
+    Wilcoxon = reject_w / M
+  ))
+}
+
+results_long <- pivot_longer(results, cols = c("Z_test", "T_test", "Wilcoxon"), names_to = "Test", values_to = "Power")  
+
+plot_zad2 <- ggplot(results_long, aes(x = mu, y = Power, color = Test)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  geom_hline(yintercept = 0.05, linetype = "dashed", color = "gray50") +
+  annotate("text", x = 2.5, y = 0.1, label = "alfa = 0.05", color = "gray50") +
+  labs(
+    title = "Porównanie testu z, t-Studenta i Wilcoxona",
+    x = expression(mu),
+    y = "Moc testu"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Z_test" = "pink", "T_test" = "violet", "Wilcoxon" = "cyan")) +
+  theme(
+    plot.title = element_text(family = "serif", size = 14, face = "bold"),
+    text = element_text(family = "serif")
+  )
+
+print(plot_zad2)
+```
+
+\subsection{Wnioski odczytane z wykresu}
+\subsubsection*{Weryfikacja poziomu istotności (dla $\mu = 1$)}
+Rozpoczynając analizę od punktu $\mu = 1$, w którym hipoteza zerowa jest prawdziwa, natrafiamy na kluczowy problem z \textbf{testem $z$}. Na wykresie widać wyraźnie, że test ten \textbf{nie trzyma zadanego poziomu istotności}. Frakcja odrzuceń wynosi dla niego aż około \textbf{$0.32$} ($32\%$), co drastycznie przekracza założone $\alpha = 0.05$. Jest to bezpośredni skutek przyjęcia błędnego założenia, że test "spodziewa się" skupionych danych ($\sigma = 2$), podczas gdy w rzeczywistości mają one duży rozrzut ($\sigma = 4$). Przez zaniżenie wariancji w mianowniku wzoru, statystyka testowa jest sztucznie podbijana, co prowadzi do masowego popełniania błędu I rodzaju. Na tym tle \textbf{test t-Studenta} oraz \textbf{test Wilcoxona} zachowują się poprawnie, utrzymując poziom odrzuceń bliski $0.05$. Test t-Studenta samodzielnie estymuje odchylenie z próby (więc "widzi" większy rozrzut), a test Wilcoxona, opierając się na rangach, jest na zmianę skali danych naturalnie odporny.
+
+\subsubsection*{Analiza kształtu funkcji mocy}
+Porównując otrzymane wykresy z wynikami \textbf{Zadania 1.}, od razu można zauważyć, że krzywe mocy dla testu t-Studenta oraz Wilcoxona uległy wyraźnemu \textbf{spłaszczeniu}. Jest to konsekwencja tego, że w \textbf{Zadaniu 2.} pracujemy na danych o dwukrotnie większym odchyleniu standardowym ($\sigma=4$). Większy "szum" w danych skutecznie maskuje rzeczywistą wartość średniej, przez co trudniej jest wykryć jej odstępstwo od hipotezy zerowej. Widać to po tym, że testy te osiągają moc bliską $1$ dopiero przy znacznie większych przesunięciach parametru $\mu$ (w okolicach $-1$ oraz $3$).
+
+Zupełnie inaczej prezentuje się krzywa testu $z$. Jest ona nienaturalnie stroma i wysoka, co na pierwszy rzut oka mogłoby sugerować świetną skuteczność. W rzeczywistości jest to jednak tylko iluzja wynikająca z błędnej kalibracji, gdyż test używa zaniżonego mianownika, przez co jego reakcja jest nieadekwatna do rzeczywistej zmienności próbki.
+
+\subsubsection*{Porównanie skuteczności testów}
+Porównanie testu $z$ z pozostałymi jest w tym przypadku niemożliwe w kategoriach rzetelności, ponieważ test $z$ nie jest testem poprawnym (nie kontroluje błędu $\alpha$). Porównując tylko testy poprawne: \textbf{test t-Studenta} oraz \textbf{test Wilcoxona}, obserwujemy, że ich krzywe przebiegają niemal identycznie. Test t-Studenta posiada minimalną przewagę mocy, co jest zgodne z teorią (jest to test najmocniejszy dla rozkładu normalnego przy nieznanej wariancji). Jednak przy naszej liczebności próby ($N=100$) różnica ta jest w praktyce pomijalna. Potwierdza to, że test Wilcoxona, mimo przejścia na rangi, przy dużej liczbie danych jest prawie tak samo skuteczny jak jego parametryczny odpowiednik.
+
+\subsubsection*{Odpowiedzi na pytania badawcze:}
+\textbf{Jak zmieniła się funkcja mocy testów?}
+
+W przypadku testów \textbf{działających poprawnie} (t-Studenta i Wilcoxona) obserwujemy \textbf{wyraźny spadek mocy}, ponieważ ich wykresy stały się bardziej płaskie w porównaniu do pierwszego zadania. Jest to bezpośredni skutek większego "szumu" w danych (większej wariancji), który utrudnia wykrycie różnic. Z kolei wykres testu $z$ przesunął się nienaturalnie w górę. Nie oznacza to jednak, że test stał się lepszy, a jedynie to, że stracił kontrolę nad błędem I rodzaju. Przez błędne założenia test ten stał się nadwrażliwy i odrzuca hipotezy zbyt pochopnie, nawet gdy są prawdziwe.
+
+\textbf{Czy w tym przypadku istnieje test jednostajnie najmocniejszy spośród nich?}
+
+Teoretycznie najwyżej na wykresie znajduje się krzywa \textbf{testu $z$}, ale ze względu na niespełnienie warunku trzymania poziomu istotności ($\alpha=0.05$), musimy go \textbf{zdyskwalifikować}. Jeśli więc wybieramy tylko spośród testów rzetelnych, to miano testu jednostajnie najmocniejszego przypada \textbf{testowi t-Studenta}. Wygrywa on minimalnie z testem Wilcoxona, co jest zgodne z oczekiwaniami. Skoro dane pochodzą z rozkładu normalnego, a wariancja jest nieznana (dla testu), t-Student jest narzędziem najlepiej dopasowanym do tej sytuacji.
+
+
+
+
+
+\newpage
+# Zadanie 3
+\subsection{Opis przebiegu realizacji zadania}
+Poniższy kod realizuje wizualizację funkcji mocy trzech testów statystycznych dla przypadku, w którym dane pochodzą z rozkładu wykładniczego $\mathcal{E}\big(\frac{1}{\mu}\big)$. W tym zadaniu jedynie \textbf{test $z$} został przeanalizowany metodą analityczną, natomiast dla pozostałych testów zastosowałyśmy symulację Monte Carlo. Po ustaleniu parametrów początkowych, dla każdego punktu pomiarowego $\mu$:
+
+\begin{enumerate}
+  \item \textbf{Dla testu $z$} wyznaczamy moc bezpośrednio ze wzoru teorii, korzystając z dystrybuanty rozkładu normalnego (\texttt{pnorm}) oraz wzorów z wykładu doktora Giniewicza [Pakiety statystyczne - przed 6 wykładem, Andrzej Giniewicz, str. 17]. Kluczowe jest tu uwzględnienie faktu, że statystyka testowa jest budowana przy założeniu stałego odchylenia z hipotezy zerowej ($\sigma_0=1$), podczas gdy rzeczywiste odchylenie standardowe w rozkładzie wykładniczym zmienia się wraz ze średnią ($\sigma=\mu$).
+  \item \textbf{Dla testów t-Studenta i Wilcoxona} przeprowadzamy symulację Monte Carlo ($M=2000$ powtórzeń):
+  \begin{itemize}
+    \item Generujemy losową próbę $N=100$ z rozkładu wykładniczego za pomocą funkcji \texttt{rexp} z parametrem \texttt{rate = 1/mu}.
+    \item Dla \textbf{testu t-Studenta} wykorzystujemy standardową funkcję \texttt{t.test} weryfikującą $H_0: \mu=1$.
+    \item Dla \textbf{testu Wilcoxona} stosujemy trik polegający na transformacji całkowej prawdopodobieństwa. Przeliczamy dane według wzoru $U = 1 - e^{\frac{-X}{\mu_0}}$. Jeśli $H_0$ jest prawdziwa, tak przekształcone dane powinny pochodzić z rozkładu jednostajnego na odcinku $[0,1]$. Weryfikujemy to testem \texttt{wilcox.test} dla mediany równej $0.5$.
+  \end{itemize}
+  \item Zliczamy przypadki, w których uzyskana p-wartość jest mniejsza od poziomu istotności $\alpha=0.05$.
+  \item Frakcja odrzuceń (dla symulacji) lub wynik wzoru analitycznego (dla testu $z$) stanowi estymator mocy testu dla danego $\mu$.
+\end{enumerate}
+
+Wyniki symulacji prezentowane są na zbiorczym wykresie.
+
+\subsection{Wykres}
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.align: 'center'
+#| dev: cairo_pdf 
+
+alpha <- 0.05
+n <- 100
+mu0 <- 1.0
+
+mu_siatka <- seq(0.5, 1.8, length.out = 121)
+
+moc_z <- function(mu) {
+  z <- qnorm(1 - alpha/2)
+  Z <- sqrt(n) * (mu - mu0) / mu0
+  sdZ   <- mu / mu0
+  
+  lewa  <- pnorm((Z - z)/ sdZ)
+  prawa <- 1 - pnorm((Z + z)/ sdZ)
+  lewa + prawa
+}
+
+moc_t <- function(mu, M = 2000, seed = 123) {
+  set.seed(seed)
+  rej <- 0L
+  for (m in 1:M) {
+    x <- rexp(n, rate = 1/mu)
+    p <- t.test(x, mu = mu0, alternative = "two.sided")$p.value
+    if (p < alpha) rej <- rej + 1L
+  }
+  rej / M
+}
+
+moc_wilcoxon <- function(mu, M = 2000, seed = 123) {
+  set.seed(seed)
+  rej <- 0L
+  for (m in 1:M) {
+    x <- rexp(n, rate = 1/mu)
+    U <- 1 - exp(-x/mu0)
+    p <- wilcox.test(U, mu = 0.5, alternative = "two.sided",
+                     exact = FALSE, correct = FALSE)$p.value
+    if (p < alpha) rej <- rej + 1L
+  }
+  rej / M
+}
+
+moc_testu_z <- sapply(mu_siatka, moc_z)
+moc_testu_tstudenta <- sapply(mu_siatka, moc_t, M = 2000, seed = 123)
+moc_testu_wilcoxon <- sapply(mu_siatka, moc_wilcoxon, M = 2000, seed = 123)
+
+
+wyniki <- data.frame(
+  mu = mu_siatka,
+  Z_test = moc_testu_z,
+  T_test = moc_testu_tstudenta,
+  Wilcoxon = moc_testu_wilcoxon
+)
+
+wyniki_long <- pivot_longer(wyniki, cols = c("Z_test", "T_test", "Wilcoxon"), names_to = "Test", values_to = "Moc")
+
+plot_zad3 <- ggplot(wyniki_long, aes(x = mu, y = Moc, color = Test)) +
+  geom_line(linewidth = 1) +
+  geom_hline(yintercept = 0.05, linetype = "dashed", color = "gray50") +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
+  annotate("text", x = 1.7, y = 0.1, label = "alfa = 0.05", color = "gray50") +
+  labs(
+    title = "Porównanie testu z, t-Studenta i Wilcoxona",
+    x = expression(mu),
+    y = "Moc testu"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Z_test" = "pink", "T_test" = "violet", "Wilcoxon" = "cyan")) +
+  theme(
+    plot.title = element_text(family = "serif", size = 14, face = "bold"),
+    text = element_text(family = "serif")
+  )
+
+print(plot_zad3)
+```
+
+\subsection{Wnioski odczytane z wykresu}
+\subsubsection*{Weryfikacja poziomu istotności (dla $\mu = 1$)}
+W tym zadaniu ponownie zajęłyśmy się badaniem zachowania testów w punkcie $\mu = 1$, w którym hipoteza zerowa $H_0$ jest prawdziwa. Analizując wykres, możemy stwierdzić, że empiryczna funkcja mocy dla wszystkich trzech testów (Z, t-Studenta oraz Wilcoxona) osiąga w tym punkcie wartość bardzo bliską $0.05$. Świadczy to o tym, że również w przypadku rozkładu wykładniczego rzeczywiste prawdopodobieństwo popełnienia \textbf{błędu I rodzaju} odpowiada przyjętemu poziomowi istotności $\alpha = 0.05$. I w tym przypadku następuje "spłaszczenie" funkcji mocy w otoczeniu punktu $\mu = 1$, jednak tym razem ma ono charakter asymetryczny. Dla wartości $\mu > 1$ (gdzie rośnie wariancja danych), krzywe mocy, a zwłaszcza dla testu t-Studenta i Wilcoxona, wzrastają wolniej, przez co więcej punktów znajduje się bliżej poziomu istotności. Omówieniem tego zjawiska i jego przyczyny zajmiemy się w następnych podpunktach.
+
+\subsubsection*{Analiza kształtu funkcji mocy}
+Kształt krzywych mocy w tym zadaniu wyraźnie różni się od symetrycznych "lejków", które obserwowałyśmy w zadaniach z rozkładem normalnym. Tutaj mamy do czynienia z silną asymetrią. Jest to następstwem zmiany rozkładu, z którego były pobierane próbki. W zamian rozkładu normalnego, użyłyśmy danych z rozkładu wykładniczego. Odchylenie standardowe jest w tym przypadku ściśle powiązane ze średnią ($\sigma = \mu$), co skutkuje \textbf{brakiem symetrii} funkcji mocy względem prostej $\mu=1$. W obszarze $\mu > 1$ (prawa strona) wartości funkcji rosną znacznie wolniej w porównaniu do strony lewej. Świadczy to o tym, że testy stają się mniej wrażliwe na wykrywanie przesunięć średniej w tym kierunku. Wynika to z faktu, że wraz ze wzrostem $\mu$ rośnie również rozrzut danych, co utrudnia odrzucenie hipotezy zerowej. W tym obszarze można zaobserwować również inne zjawisko: krzywa testu $z$ (różowa) przebiega powyżej krzywej testu t-Studenta. Jest to konsekwencją założenia testu $z$ o stałym odchyleniu $\sigma=1$ (z hipotezy $H_0$), podczas gdy test t-Studenta uwzględnia rzeczywisty, większy rozrzut danych, przez co jego moc rośnie wolniej. Z kolei dla $\mu < 1$ (lewa strona), gdzie wariancja danych maleje, funkcje mocy rosną szybciej. Osiągają one wartość bliską $1$ już w okolicach punktu $\mu = 0.6$, co świadczy o bardzo wysokiej wrażliwości testów na odchylenia w stronę mniejszych wartości średniej. W tym przypadku błąd standardowy maleje, co sprawia, że nawet niewielkie przesunięcie średniej staje się statystycznie istotne (wielokrotność błędu standardowego rośnie szybciej). Mimo braku symetrii, wraz ze wzrostem odległości parametru $\mu$ od wartości testowanej $\mu=1$, moc wszystkich testów rośnie monotonicznie, co świadczy o nieobciążoności badanych testów.
+
+\subsubsection*{Porównanie skuteczności testów}
+\textbf{Test $z$ a Test t-Studenta}
+
+Porównując te dwa testy na wykresie, możemy zaobserwować różnicę w ich zachowaniu. Dla wartości $\mu > 1$ funkcja mocy testu $z$ przebiega powyżej funkcji mocy testu t-Studenta. Oznacza to, że w tych warunkach lepiej radzi sobie test t-Studenta. Wynika to z faktu, że test $z$ przyjmuje w mianowniku statystyki stałe odchylenie $\sigma_0 = 1$ (wynikające z hipotezy zerowej). Warto zaznaczyć, że dla rozkładu wykładniczego, gdy średnia rośnie, rośnie też wariancja danych. Test t-Studenta uwzględnia ten wzrost (estymując $S$ z próby), co obniża jego statystykę testową i moc. Test $z$ ignoruje wzrost wariancji, przez co jego statystyka jest sztucznie zawyżona. Daje to wyższą moc, ale wynika ona z błędnego modelu. Z kolei dla $\mu < 1$ możemy zaobserwować, że sytuacja jest odwrotna, ponieważ krzywa testu $z$ znajduje się poniżej krzywej testu t-Studenta. W tym obszarze rzeczywista wariancja danych jest mniejsza niż $1$. Tutaj rzeczywista wariancja jest mała (mniejsza od 1), ale test $z$ wciąż sztywno zakłada $\sigma=1$. Przez to jego statystyka jest zaniżona ("myśli", że szum jest duży, choć jest mały) i jego moc spada poniżej mocy testu t-Studenta.
+
+\textbf{Testy parametryczne oraz Test Wilcoxona (nieparametryczny)}
+
+Jak możemy zaobserwować na wykresie, linie funkcji testów parametrycznych przebiegają nad funkcją mocy nieparametrycznego testu Wilcoxona zarówno dla $\mu < 1$, jak i dla większych wartości $\mu$. Jedynie w bliskim sąsiedztwie punktu $\mu = 1$ (do około $\mu \approx 1.18$) metoda nieparametryczna wykazuje nieco wyższą moc niż test t-Studenta. Związane jest to z charakterystyką testu Wilcoxona, który operuje na rangach i dzięki temu jest odporniejszy na skrajne wartości; w tak małym zakresie jest on w stanie szybciej zauważyć przesunięcie rozkładu. Teoretycznie, w związku z asymetrycznością rozkładu wykładniczego oraz założeniem testów parametrycznych o normalności rozkładu, to metoda nieparametryczna powinna radzić sobie lepiej w badanych warunkach. Jednak przy liczebności próby $N=100$, test t-Studenta wykazuje dużą odporność na dane pochodzące z rozkładu innego niż normalny. Dzięki dużej liczbie obserwacji średnia z naszej próby zachowuje się na tyle stabilnie, że asymetria rozkładu wykładniczego nie wpływa znacząco na wyniki testu parametrycznego. 
+Zaś test Wilcoxona charakteryzuje się również wysoką efektywnością przy dużych próbach (bliską $95,5\%$ mocy względem testu t-Studenta), co sprawia, że nawet dla danych asymetrycznych radzi sobie bardzo dobrze. W naszym przypadku obie te właściwości powodują, że funkcje mocy dla tych dwóch testów prawie się pokrywają. Prowadzi to do wniosku, że przy tak dużej próbie wybór między testem t-Studenta a Wilcoxonem nie ma w praktyce większego znaczenia, bo obie metody niemal identycznie wykrywają fałszywą hipotezę zerową.
+
+\subsubsection*{Odpowiedzi na pytania badawcze:}
+\textbf{Jak zmieniła się funkcja mocy testów?}
+
+Spoglądając na wykres, na pierwszy rzut oka możemy stwierdzić, że krzywe mocy dla rozkładu wykładniczego znacząco różnią się od tych obserwowanych w przypadku rozkładu normalnego (Zadanie 1. oraz Zadanie 2.). Zmiana ta spowodowała, że funkcje mocy dla wszystkich trzech testów statystycznych stały się asymetryczne, w odróżnieniu od rezultatów uzyskanych przez nas w poprzednich zadaniach, gdzie miałyśmy do czynienia z symetrycznością rozkładu. Asymetria krzywych jest konsekwencją zależności średniej od odchylenia standardowego. Im większa średnia, tym większy jest rozrzut danych, co utrudnia odrzucenie fałszywej hipotezy zerowej. W związku z tą zależnością, dla $\mu > 1$ (prawa strona wykresu) możemy zaobserwować wolniejszy wzrost funkcji niż dla lewej strony, czyli wartości mniejszych od $\mu < 1$, gdzie mniejszy rozrzut danych pozwala na szybsze osiągnięcie wartości $1$ i tym samym pełnej mocy. 
+
+\textbf{Czy w tym przypadku istnieje test jednostajnie najmocniejszy spośród nich?}
+
+W oparciu o analizę wykresu oraz wyciągnięte wnioski możemy stwierdzić, że w tym przypadku \textbf{nie istnieje jeden test jednostajnie najmocniejszy}. Krzywa takiego testu musiałaby znajdować się nad krzywymi pozostałych metod, a jego moc przewyższać wartości obu testów na przestrzeni badanego przedziału, czyli wszystkich możliwych wartości parametrów $\mu$. Na wykresie w Zadaniu 3 można zaobserwować jednak, że funkcje mocy przecinają się, co świadczy o tym, że różne testy wypadają najlepiej w zależności od tego, czy $\mu$ rośnie, czy maleje. Dla wartości $\mu > 1$ najwyższą moc wykazuje test $z$, ponieważ przyjęty wzór statystyczny zawyża wyniki przy rosnącej wariancji danych. Z kolei dla $\mu  < 1$ test t-Studenta wykazuje się najlepszą efektywnością, co jest następstwem lepszego wykorzystania mniejszego rozrzutu danych do odrzucenia fałszywej hipotezy zerowej. Test Wilcoxona, mimo nieparametrycznego charakteru, osiąga wyniki zbliżone do metod parametrycznych, choć po przekroczeniu punktu $\mu \approx 1.18$ wykazuje od nich mniejszą skuteczność. Można więc uznać test t-Studenta za najlepszy wybór w tym zestawieniu, mimo że formalnie nie dominuje on w każdym punkcie (przez przecięcie z "oszukującym" testem $z$).
+
+
+
+
+
+\newpage
+# Podsumowanie 
+Przeprowadzona analiza porównawcza funkcji mocy testu $z$, testu t-Studenta oraz testu Wilcoxona pozwoliła nam na wyciągnięcie kluczowych wniosków dotyczących ich skuteczności i odporności w różnych warunkach:
+
+\begin{itemize}
+    \item \textbf{Optymalność w warunkach idealnych:} W przypadku danych pochodzących z rozkładu normalnego przy znanej wariancji, test $z$ okazał się testem jednostajnie najmocniejszym. Test t-Studenta wykazał niemal identyczną skuteczność dzięki dużej liczebności próby ($N=100$), natomiast test Wilcoxona, mimo nieparametrycznego charakteru, zachował wysoką efektywność na poziomie około 95,5\% względem metod parametrycznych.
+    \item \textbf{Wrażliwość na niedoszacowanie zmienności:} Zwiększenie odchylenia standardowego ($\sigma=4$) przy zachowaniu założenia o mniejszym odchyleniu w teście $z$ ($\sigma=2$) pokazało, że moc testów jest powiązana z tym, jak bardzo rozrzucone są wyniki z próby. Można było zaobserwować "spłaszczenie" funkcji mocy testu t-Studenta i Wilcoxona, co znacznie obniżyło ich skuteczność w wykrywaniu małych odchyleń od hipotezy zerowej. Test $z$ w tych warunkach utracił kontrolę nad błędem I rodzaju (rzeczywisty poziom istotności znacznie przekroczył założone 0.05), co w praktyce dyskwalifikuje go w sytuacjach niepewności co do wariancji.
+    \item \textbf{Asymetria i wpływ rozkładu wykładniczego:} Zmiana rozkładu na wykładniczy całkowicie zmieniła charakterystykę funkcji mocy, nadając im postać asymetryczną. Wykazano, że testy znacznie szybciej osiągają pełną moc dla wartości $\mu < 1$, gdzie wariancja danych maleje, natomiast dla $\mu > 1$ wzrost mocy następuje wolniej ze względu na rosnący rozrzut danych. 
+    \item \textbf{Brak testu jednostajnie najmocniejszego dla rozkładu wykładniczego:} W scenariuszu z rozkładem wykładniczym niemożliwe było wyłonienie jednego testu jednostajnie najmocniejszego. Przecinanie się krzywych mocy wykazało, że skuteczność danej metody zależy od wartości parametru $\mu$: test $z$ dominował po prawej stronie wykresu, podczas gdy test t-Studenta był najbardziej efektywny po stronie lewej.
+    \item \textbf{Odporność asymptotyczna:} Wszystkie trzy zadania potwierdziły, że przy liczebności próby $N=100$, testy parametryczne wykazują dużą odporność na naruszenie założenia o normalności rozkładu. Jednocześnie test Wilcoxona udowodnił, że jest stabilną i bezpieczną alternatywą, która oferuje moc zbliżoną do testów klasycznych, nie wymagając przy tym spełnienia rygorystycznych założeń modelowych.
+\end{itemize}
+
+**Wnioski końcowe**
+
+Aby podsumować wyniki wszystkich trzech zadań, można sformułować wniosek końcowy dotyczący relacji między badanymi testami statystycznymi. Wykazano, że \textbf{test $z$} jest narzędziem najmocniejszym wyłącznie w ściśle określonych warunkach pełnej zgodności założeń modelu z rzeczywistością, jednak staje się mniej obiektywny w sytuacjach błędnego oszacowania wariancji lub dużej asymetrii danych. \textbf{Test t-Studenta} udowodnił zaś swoją wysoką odporność i rzetelność, ponieważ nawet przy braku normalności rozkładu i zmiennej wariancji, potrafi on dostosować się do rzeczywistego szumu w danych. 
+
+Z kolei \textbf{nieparametryczny test Wilcoxona} okazał się bezpieczną alternatywą, która przy dużej próbie ($N=100$) oferuje skuteczność niemal identyczną z metodami parametrycznymi, nie wymagając przy tym spełnienia rygorystycznych założeń o postaci rozkładu. Kluczową obserwacją płynącą ze wszystkich symulacji jest fakt, że skuteczność testów na wykrywanie zmian średniej znacznie maleje wraz ze wzrostem rozproszenia danych, co uwypuklił asymetryczny kształt funkcji mocy dla rozkładu wykładniczego. Ostatecznie, testy \textbf{t-Studenta} oraz \textbf{Wilcoxona} potwierdziły swoją \textbf{rzetelność}, poprawnie kontrolując błąd I rodzaju we wszystkich badanych scenariuszach. \textbf{Test $z$} zachował tę właściwość \textbf{jedynie w warunkach idealnych}, tracąc ją w momencie naruszenia założeń o wariancji.
+
+Na zakończenie, wybór optymalnego testu powinien zawsze uwzględniać wiedzę o charakterze rozkładu oraz stabilności wariancji w badanej populacji, gdyż czynniki te decydują o rzetelności i skuteczności wnioskowania statystycznego.
